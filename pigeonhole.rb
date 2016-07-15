@@ -95,6 +95,10 @@ get '/noise-candidates/?' do
   redirect "/noise-candidates/#{last_week}/#{today}"
 end
 
+get '/alerts-grouped-by-hour-of-day/' do
+  redirect "/alerts-grouped-by-hour-of-day/#{last_week}/#{today}"
+end
+
 get '/status' do
   begin
     influxdb.healthcheck
@@ -138,6 +142,15 @@ get '/alert-frequency/:start_date/:end_date' do
   haml :"alert-frequency"
 end
 
+get '/alerts-grouped-by-hour-of-day/:start_date/:end_date' do
+  @start_date = params['start_date']
+  @end_date   = params['end_date']
+  @search     = params['search']
+  @results    = influxdb.alerts_per_hour_per_day(@start_date, @end_date, search_precondition)
+  @series      = HighCharts.alerts_grouped_by_hour_of_day(@results)
+  #haml :"alerts-groups-by-hour-of-dday"
+end
+   
 get '/check-frequency/:start_date/:end_date' do
   @start_date = params['start_date']
   @end_date   = params['end_date']
