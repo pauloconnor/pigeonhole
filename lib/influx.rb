@@ -137,6 +137,34 @@ module Influx
       end.compact
     end
 
+    def alerts_per_hour_per_day(start_date = nil, end_date = nil, precondition = '')
+      query_input = {
+        :query_select => "select count(check) as check_count, check",
+	:conditions => "#{precondition} group by time(1h), check"
+      }
+      incidents = find_incidents(start_date, end_date, query_input).sort_by { |k| k['time'] }
+      return [] if incidents.empty?
+      results = {}
+
+      for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        results[day] = {}
+	for hour in 0..23
+	  results[day][hour] = {}
+	end
+      end
+
+      incidents.each do |incident|
+        ts = Time.at(incident['time'].to_i)
+        day = ts.strftime('%a')
+	hour = ts.hour
+	if results[day][hour].include?(incident['check'])
+	  results[day][hour][incident['check']] += 1
+	else
+	  results[day][hour][incident['check']] = 1
+	end
+      end
+    end
+
     def check_frequency(start_date = nil, end_date = nil, precondition = '')
       query_input = {
         :query_select => "select count(incident_key), incident_key, input_type, check",

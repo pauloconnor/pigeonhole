@@ -12,6 +12,19 @@ module HighCharts
     end.slice(0, 50).to_json
   end
 
+  def self.alerts_grouped_by_hour_of_day(results)
+    xaxis = {}
+    xaxis['categories'] = []
+    for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      for hour in 0..23
+        xaxis['categories'] << "#{day} #{hour}"
+      end
+    end
+    series = []
+    for hour in 0..23
+      for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  end
+
   def self.noise_candidates(incidents)
     incidents.map do |incident|
       name = incident['check']
