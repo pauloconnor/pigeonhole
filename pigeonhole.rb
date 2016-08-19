@@ -96,6 +96,17 @@ get '/noise-candidates/?' do
   redirect "/noise-candidates/#{last_week}/#{today}"
 end
 
+get '/alerts-grouped-by-hour-of-day/' do
+  redirect "/alerts-grouped-by-hour-of-day/#{last_week}/#{today}"
+end
+
+get '/hourly/' do
+  redirect "/hourly/#{last_week}/#{today}"
+end
+get '/wake-up/' do
+  redirect "/wake-up/#{last_week}/#{today}"
+end
+
 get '/status' do
   begin
     influxdb.healthcheck
@@ -140,6 +151,15 @@ get '/alert-frequency/:start_date/:end_date' do
   haml :"alert-frequency"
 end
 
+get '/alerts-grouped-by-hour-of-day/:start_date/:end_date' do
+  @start_date = params['start_date']
+  @end_date   = params['end_date']
+  @search     = params['search']
+  @results    = influxdb.alerts_per_hour_per_day(@start_date, @end_date, search_precondition)
+  @series      = HighCharts.alerts_grouped_by_hour_of_day(@results)
+  #haml :"alerts-groups-by-hour-of-dday"
+end
+
 get '/check-frequency/:start_date/:end_date' do
   @start_date = params['start_date']
   @end_date   = params['end_date']
@@ -148,14 +168,25 @@ get '/check-frequency/:start_date/:end_date' do
   @pagerduty_url = pagerduty.pagerduty_url
   @total      = @incidents.map { |x| x['count'] }.inject(:+) || 0
   @series     = D3.alert_frequency(@incidents)
+  series2 =  influxdb.alerts_per_hour_per_day(@start_date, @end_date, search_precondition)
   haml :"check-frequency"
+end
+
+get '/hourly/:start_date/:end_date' do
+  @start_date    = params['start_date']
+  @end_date      = params['end_date']
+  @search        = params['search']
+  @incidents     = influxdb.alerts_per_hour_per_day(@start_date, @end_date, search_precondition)
+  @pagerduty_url = pagerduty.pagerduty_url
+  @series        = D3.response_hours(@incidents)
+  haml :"hourly"
 end
 
 get '/alert-response/:start_date/:end_date' do
   @start_date = params['start_date']
   @end_date   = params['end_date']
   @search     = params['search']
-  resp = influxdb.alert_response(@start_date, @end_date, search_precondition)
+  resp        = influxdb.alert_response(@start_date, @end_date, search_precondition)
   @series     = D3.alert_response(resp)
   # Build table data
   @incidents  = resp[:incidents] || []
@@ -184,6 +215,18 @@ get '/history/:client/:check' do
   @incidents  = influxdb.get_history(@client, @check)
   @pagerduty_url = pagerduty.pagerduty_url
   haml :"alert-history"
+end
+
+get '/wake-up/:start_date/:end_date' do
+  @start_date    = params['start_date']
+  @end_date      = params['end_date']
+  @search        = params['search']
+  @wake_up_start = 5
+  @wake_up_end   = 9
+  @incidents     = influxdb.wake_up(@start_date, @end_date, @wake_up_start, @wake_up_end, search_precondition)
+  @pagerduty_url = pagerduty.pagerduty_url
+  @series        = D3.wake_up(@incidents)
+  haml :"wake-up"
 end
 
 post '/categorisation/:start_date/:end_date' do
