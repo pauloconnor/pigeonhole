@@ -1,3 +1,4 @@
+require 'date'
 require 'json'
 
 module D3
@@ -62,5 +63,42 @@ module D3
         :values => resolve_data,
       }
     ].to_json
+  end
+
+  def self.wake_up(incidents)
+    series = {}
+    incidents.map do |incident|
+      name = incident['check']
+      if !series[name]
+        series[name] = 1
+      else
+        series[name] = series[name] + 1
+      end
+    end
+    series = series.sort_by {|_key, value| value}.reverse
+    series.map do | name, count |
+      {
+        :name => name,
+        :data => count
+      }
+    end.slice(0, 50).to_json
+  end
+
+  def self.response_hours(opts)
+    series = {}
+    opts.each do | o |
+      time_stamp = DateTime.strptime(o['time'].to_s,'%s')
+      if !series[time_stamp.strftime('%a')]
+        series[time_stamp.strftime('%a')] = {}
+      end
+      if !series[time_stamp.strftime('%a')][time_stamp.hour]
+        series[time_stamp.strftime('%a')][time_stamp.hour] = {}
+        series[time_stamp.strftime('%a')][time_stamp.hour]['count'] = 0
+        series[time_stamp.strftime('%a')][time_stamp.hour]['checks'] = []
+      end
+      series[time_stamp.strftime('%a')][time_stamp.hour]['count'] = series[time_stamp.strftime('%a')][time_stamp.hour]['count'] + o['check_count']
+      series[time_stamp.strftime('%a')][time_stamp.hour]['checks'].push("#{o['check']}: #{o['check_count']}")
+    end
+    return series.to_json
   end
 end

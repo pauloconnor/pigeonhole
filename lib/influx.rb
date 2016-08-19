@@ -140,7 +140,7 @@ module Influx
     def alerts_per_hour_per_day(start_date = nil, end_date = nil, precondition = '')
       query_input = {
         :query_select => "select count(check) as check_count, check",
-	:conditions => "#{precondition} group by time(1h), check"
+  	    :conditions => "#{precondition} group by time(1h), check"
       }
       incidents = find_incidents(start_date, end_date, query_input).sort_by { |k| k['time'] }
       return [] if incidents.empty?
@@ -148,20 +148,20 @@ module Influx
 
       for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         results[day] = {}
-	for hour in 0..23
-	  results[day][hour] = {}
-	end
+      	for hour in 0..23
+      	  results[day][hour] = {}
+      	end
       end
 
       incidents.each do |incident|
         ts = Time.at(incident['time'].to_i)
         day = ts.strftime('%a')
-	hour = ts.hour
-	if results[day][hour].include?(incident['check'])
-	  results[day][hour][incident['check']] += 1
-	else
-	  results[day][hour][incident['check']] = 1
-	end
+      	hour = ts.hour
+      	if results[day][hour].include?(incident['check'])
+      	  results[day][hour][incident['check']] += 1
+      	else
+      	  results[day][hour][incident['check']] = 1
+      	end
       end
     end
 
@@ -178,6 +178,27 @@ module Influx
           'count'        => incident['count'],
           'check'        => incident['check'],
           'input_type'   => incident['input_type']
+        }
+      end.compact
+    end
+
+    def wake_up(start_date = nil, end_date = nil, wake_up_start = 5, wake_up_end = 9, precondition = '')
+      incidents = find_incidents(start_date, end_date, :conditions => precondition)
+      return [] if incidents.empty?
+      incidents.map do |incident|
+        next if incident['check'].nil?
+        t = Time.at(incident['time']).hour
+        # Are we outside of the wake up window? Drop the alert
+        next if t > wake_up_start.to_i  && t < wake_up_end.to_i
+        {
+          'id'              => incident['id'],
+          'alert_time'      => incident['time'],
+          'incident_key'    => incident['incident_key'].to_s.strip,
+          'entity'          => incident['entity'],
+          'check'           => incident['check'],
+          'description'     => incident['description'],
+          'acknowledge_by'  => incident['acknowledge_by'] || 'N/A',
+          'input_type'      => incident['input_type']
         }
       end.compact
     end

@@ -18,6 +18,7 @@
     %script{:src => "/js/jquery.timeago.js"}
     %script{:src => "/js/tablesort.js"}
     %script{:src => "/js/d3.v3.min.js"}
+    %script{:src => "/js/d3.tip.v0.6.3.js"}
     %script{:src => "/js/nv.d3.min.js"}
 
     %script{:src => "/js/pigeonhole.js"}
@@ -43,6 +44,10 @@
               %a{:href=>"/alert-response/#{@start_date}/#{@end_date}#{q}"} Alert Response
             %li
               %a{:href=>"/noise-candidates/#{@start_date}/#{@end_date}#{q}"} Alert Noise Candidates
+            /%li
+            /  %a{:href=>"/hourly/#{@start_date}/#{@end_date}#{q}"} Hourly
+            %li
+              %a{:href=>"/wake-up/#{@start_date}/#{@end_date}#{q}"} Wake Up
 
           - unless request.path_info == '/'
             %div.navbar-form.navbar-right
